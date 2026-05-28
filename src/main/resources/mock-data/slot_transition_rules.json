@@ -1,0 +1,101 @@
+[ {
+  "from_slot" : "晚餐主餐",
+  "to_slot" : "夜景散步",
+  "weight" : 0.95,
+  "reason" : "晚餐后接短距离散步，体验更完整。"
+}, {
+  "from_slot" : "夜景散步",
+  "to_slot" : "甜品收尾",
+  "weight" : 0.92,
+  "reason" : "散步后进入轻收尾环节，节奏自然。"
+}, {
+  "from_slot" : "晚餐主餐",
+  "to_slot" : "清吧收尾",
+  "weight" : 0.88,
+  "reason" : "适合夜间约会和朋友聚会的延展。"
+}, {
+  "from_slot" : "咖啡休息点",
+  "to_slot" : "晚餐主餐",
+  "weight" : 0.86,
+  "reason" : "从轻社交热身过渡到主餐较顺。"
+}, {
+  "from_slot" : "景点打卡",
+  "to_slot" : "胡同散步",
+  "weight" : 0.91,
+  "reason" : "同类步行场景衔接自然，适合 Citywalk。"
+}, {
+  "from_slot" : "胡同散步",
+  "to_slot" : "咖啡休息点",
+  "weight" : 0.89,
+  "reason" : "步行后安排休息点能降低疲劳。"
+}, {
+  "from_slot" : "咖啡休息点",
+  "to_slot" : "本地小吃",
+  "weight" : 0.87,
+  "reason" : "休息后进入轻餐饮，预算友好。"
+}, {
+  "from_slot" : "景点打卡",
+  "to_slot" : "文化体验点",
+  "weight" : 0.83,
+  "reason" : "游客动线从景点延伸到文化体验较稳定。"
+}, {
+  "from_slot" : "文化体验点",
+  "to_slot" : "本地小吃",
+  "weight" : 0.84,
+  "reason" : "文化体验后接本地餐饮有目的地特色。"
+}, {
+  "from_slot" : "简餐点",
+  "to_slot" : "咖啡休息点",
+  "weight" : 0.82,
+  "reason" : "学生和轻量路线常见搭配。"
+}, {
+  "from_slot" : "聊天点",
+  "to_slot" : "夜宵点",
+  "weight" : 0.85,
+  "reason" : "社交停留后接夜宵适合延长聚会。"
+}, {
+  "from_slot" : "午餐主餐",
+  "to_slot" : "强体验活动",
+  "weight" : 0.78,
+  "reason" : "先补充体力，再进入高参与活动。"
+}, {
+  "from_slot" : "强体验活动",
+  "to_slot" : "晚餐主餐",
+  "weight" : 0.9,
+  "reason" : "高强度活动后回归主餐补给合理。"
+}, {
+  "from_slot" : "室内展览",
+  "to_slot" : "商场餐饮",
+  "weight" : 0.9,
+  "reason" : "雨天和亲子路线常用的稳定组合。"
+}, {
+  "from_slot" : "商场餐饮",
+  "to_slot" : "室内娱乐",
+  "weight" : 0.88,
+  "reason" : "同场景切换成本低，适合雨天。"
+}, {
+  "from_slot" : "文化体验点",
+  "to_slot" : "午餐主餐",
+  "weight" : 0.8,
+  "reason" : "白天文化活动后接正餐较常见。"
+}, {
+  "from_slot" : "午餐主餐",
+  "to_slot" : "室内活动",
+  "weight" : 0.76,
+  "reason" : "亲子和雨天路线中频繁出现。"
+}, {
+  "from_slot" : "散步点",
+  "to_slot" : "咖啡休息点",
+  "weight" : 0.9,
+  "reason" : "独处放松路线需要节奏缓冲。"
+}, {
+  "from_slot" : "文艺点",
+  "to_slot" : "晚餐主餐",
+  "weight" : 0.77,
+  "reason" : "文艺体验后接餐饮，适合慢节奏晚间路线。"
+}, {
+  "from_slot" : "夜生活点",
+  "to_slot" : "聊天点",
+  "weight" : 0.79,
+  "reason" : "夜生活开始后常切换到可停留交流的场景。"
+} ]

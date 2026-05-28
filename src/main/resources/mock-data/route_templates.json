@@ -1,0 +1,201 @@
+[ {
+  "template_id" : "RT001",
+  "scene" : "情侣约会",
+  "time_period" : "晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 240,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "晚餐主餐", "夜景散步", "甜品收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+}, {
+  "template_id" : "RT002",
+  "scene" : "情侣约会",
+  "time_period" : "下午到晚间",
+  "min_duration_minutes" : 240,
+  "max_duration_minutes" : 360,
+  "budget_level" : "高",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "咖啡休息点", "晚餐主餐", "夜景散步", "清吧收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+}, {
+  "template_id" : "RT003",
+  "scene" : "朋友聚会",
+  "time_period" : "晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "晚餐主餐", "聊天点", "夜间娱乐" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT004",
+  "scene" : "朋友聚会",
+  "time_period" : "全天",
+  "min_duration_minutes" : 240,
+  "max_duration_minutes" : 420,
+  "budget_level" : "中",
+  "pace_level" : "紧凑",
+  "slot_sequence" : [ "午餐主餐", "强体验活动", "晚餐主餐", "夜宵点" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "海淀区" ]
+}, {
+  "template_id" : "RT005",
+  "scene" : "Citywalk",
+  "time_period" : "白天",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "低",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "景点打卡", "胡同散步", "咖啡休息点", "本地小吃" ],
+  "suitable_districts" : [ "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT006",
+  "scene" : "Citywalk",
+  "time_period" : "下午到晚间",
+  "min_duration_minutes" : 240,
+  "max_duration_minutes" : 360,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "景点打卡", "散步点", "文艺点", "晚餐主餐" ],
+  "suitable_districts" : [ "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT007",
+  "scene" : "游客半日游",
+  "time_period" : "上午",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 240,
+  "budget_level" : "中",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "景点打卡", "文化体验点", "本地小吃" ],
+  "suitable_districts" : [ "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT008",
+  "scene" : "游客半日游",
+  "time_period" : "下午",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "景点打卡", "散步点", "晚餐主餐" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT009",
+  "scene" : "低预算学生路线",
+  "time_period" : "午后",
+  "min_duration_minutes" : 150,
+  "max_duration_minutes" : 240,
+  "budget_level" : "低",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "简餐点", "咖啡休息点", "聊天点" ],
+  "suitable_districts" : [ "海淀区", "朝阳区", "西城区" ]
+}, {
+  "template_id" : "RT010",
+  "scene" : "低预算学生路线",
+  "time_period" : "晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "低",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "晚餐主餐", "聚会点", "夜宵点" ],
+  "suitable_districts" : [ "海淀区", "朝阳区", "西城区" ]
+}, {
+  "template_id" : "RT011",
+  "scene" : "亲子室内路线",
+  "time_period" : "白天",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "室内活动", "商场餐饮", "休息点" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+}, {
+  "template_id" : "RT012",
+  "scene" : "亲子室内路线",
+  "time_period" : "全天",
+  "min_duration_minutes" : 240,
+  "max_duration_minutes" : 360,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "文化体验点", "午餐主餐", "室内活动", "甜品收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "海淀区" ]
+}, {
+  "template_id" : "RT013",
+  "scene" : "雨天路线",
+  "time_period" : "白天",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "室内展览", "商场餐饮", "室内娱乐" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT014",
+  "scene" : "雨天路线",
+  "time_period" : "下午到晚间",
+  "min_duration_minutes" : 240,
+  "max_duration_minutes" : 360,
+  "budget_level" : "中",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "咖啡休息点", "室内活动", "晚餐主餐" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT015",
+  "scene" : "夜游路线",
+  "time_period" : "晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "晚餐主餐", "夜景散步", "清吧收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+}, {
+  "template_id" : "RT016",
+  "scene" : "夜游路线",
+  "time_period" : "深夜前",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "夜生活点", "聊天点", "夜宵点" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "海淀区" ]
+}, {
+  "template_id" : "RT017",
+  "scene" : "独处放松路线",
+  "time_period" : "午后",
+  "min_duration_minutes" : 150,
+  "max_duration_minutes" : 240,
+  "budget_level" : "低",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "散步点", "咖啡休息点", "文艺点" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT018",
+  "scene" : "独处放松路线",
+  "time_period" : "晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 240,
+  "budget_level" : "中",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "晚餐主餐", "散步点", "甜品收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+}, {
+  "template_id" : "RT019",
+  "scene" : "朋友聚会",
+  "time_period" : "雨天晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "中",
+  "pace_level" : "适中",
+  "slot_sequence" : [ "晚餐主餐", "室内娱乐", "甜品收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区", "海淀区" ]
+}, {
+  "template_id" : "RT020",
+  "scene" : "情侣约会",
+  "time_period" : "雨天晚间",
+  "min_duration_minutes" : 180,
+  "max_duration_minutes" : 300,
+  "budget_level" : "高",
+  "pace_level" : "轻松",
+  "slot_sequence" : [ "室内展览", "晚餐主餐", "甜品收尾" ],
+  "suitable_districts" : [ "朝阳区", "东城区", "西城区" ]
+} ]

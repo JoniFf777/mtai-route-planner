@@ -1,0 +1,201 @@
+[ {
+  "area_id" : "BA001",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "三里屯",
+  "center_lat" : 39.937,
+  "center_lng" : 116.4543,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "潮流", "夜生活", "约会", "拍照" ],
+  "suitable_scenes" : [ "情侣约会", "夜游路线", "朋友聚会" ]
+}, {
+  "area_id" : "BA002",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "国贸",
+  "center_lat" : 39.9084,
+  "center_lng" : 116.4611,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "商务", "高端餐饮", "精致约会" ],
+  "suitable_scenes" : [ "情侣约会", "朋友聚会", "游客半日游" ]
+}, {
+  "area_id" : "BA003",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "望京",
+  "center_lat" : 40.0049,
+  "center_lng" : 116.4705,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "韩餐", "年轻人", "聚会", "咖啡" ],
+  "suitable_scenes" : [ "朋友聚会", "低预算学生路线", "独处放松路线" ]
+}, {
+  "area_id" : "BA004",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "亮马河",
+  "center_lat" : 39.9498,
+  "center_lng" : 116.4749,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "夜景", "散步", "松弛感", "约会" ],
+  "suitable_scenes" : [ "情侣约会", "夜游路线", "独处放松路线" ]
+}, {
+  "area_id" : "BA005",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "蓝色港湾",
+  "center_lat" : 39.9333,
+  "center_lng" : 116.4735,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "商场", "休闲", "拍照", "亲子" ],
+  "suitable_scenes" : [ "亲子室内路线", "情侣约会", "雨天路线" ]
+}, {
+  "area_id" : "BA006",
+  "city" : "北京",
+  "district" : "朝阳区",
+  "area_name" : "朝阳公园",
+  "center_lat" : 39.9331,
+  "center_lng" : 116.4788,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "公园", "户外", "散步", "放松" ],
+  "suitable_scenes" : [ "独处放松路线", "情侣约会", "游客半日游" ]
+}, {
+  "area_id" : "BA007",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "王府井",
+  "center_lat" : 39.9151,
+  "center_lng" : 116.4119,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "商圈", "游客", "购物", "餐饮" ],
+  "suitable_scenes" : [ "游客半日游", "朋友聚会", "雨天路线" ]
+}, {
+  "area_id" : "BA008",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "前门",
+  "center_lat" : 39.8954,
+  "center_lng" : 116.4046,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "老北京", "游客", "景点", "小吃" ],
+  "suitable_scenes" : [ "游客半日游", "Citywalk", "夜游路线" ]
+}, {
+  "area_id" : "BA009",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "南锣鼓巷",
+  "center_lat" : 39.9409,
+  "center_lng" : 116.4037,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "胡同", "citywalk", "小吃", "文艺" ],
+  "suitable_scenes" : [ "Citywalk", "游客半日游", "独处放松路线" ]
+}, {
+  "area_id" : "BA010",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "东直门",
+  "center_lat" : 39.9462,
+  "center_lng" : 116.4344,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "交通枢纽", "餐饮", "夜生活", "便利" ],
+  "suitable_scenes" : [ "朋友聚会", "夜游路线", "雨天路线" ]
+}, {
+  "area_id" : "BA011",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "雍和宫",
+  "center_lat" : 39.9485,
+  "center_lng" : 116.417,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "文化", "寺院", "胡同", "安静" ],
+  "suitable_scenes" : [ "Citywalk", "独处放松路线", "游客半日游" ]
+}, {
+  "area_id" : "BA012",
+  "city" : "北京",
+  "district" : "东城区",
+  "area_name" : "簋街",
+  "center_lat" : 39.9399,
+  "center_lng" : 116.4353,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "夜宵", "烟火气", "夜生活", "聚餐" ],
+  "suitable_scenes" : [ "朋友聚会", "夜游路线", "情侣约会" ]
+}, {
+  "area_id" : "BA013",
+  "city" : "北京",
+  "district" : "西城区",
+  "area_name" : "西单",
+  "center_lat" : 39.9085,
+  "center_lng" : 116.3737,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "商场", "潮流", "娱乐", "餐饮" ],
+  "suitable_scenes" : [ "朋友聚会", "雨天路线", "低预算学生路线" ]
+}, {
+  "area_id" : "BA014",
+  "city" : "北京",
+  "district" : "西城区",
+  "area_name" : "什刹海",
+  "center_lat" : 39.9424,
+  "center_lng" : 116.3853,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "夜景", "胡同", "清吧", "游客" ],
+  "suitable_scenes" : [ "夜游路线", "Citywalk", "情侣约会" ]
+}, {
+  "area_id" : "BA015",
+  "city" : "北京",
+  "district" : "西城区",
+  "area_name" : "金融街",
+  "center_lat" : 39.9173,
+  "center_lng" : 116.366,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "商务", "安静", "品质餐饮", "精致" ],
+  "suitable_scenes" : [ "情侣约会", "独处放松路线", "雨天路线" ]
+}, {
+  "area_id" : "BA016",
+  "city" : "北京",
+  "district" : "西城区",
+  "area_name" : "牛街",
+  "center_lat" : 39.8916,
+  "center_lng" : 116.3703,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "小吃", "烟火气", "清真餐饮", "本地感" ],
+  "suitable_scenes" : [ "Citywalk", "低预算学生路线", "游客半日游" ]
+}, {
+  "area_id" : "BA017",
+  "city" : "北京",
+  "district" : "海淀区",
+  "area_name" : "五道口",
+  "center_lat" : 39.9929,
+  "center_lng" : 116.3388,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "学生", "低预算", "聚会", "夜生活" ],
+  "suitable_scenes" : [ "低预算学生路线", "朋友聚会", "夜游路线" ]
+}, {
+  "area_id" : "BA018",
+  "city" : "北京",
+  "district" : "海淀区",
+  "area_name" : "中关村",
+  "center_lat" : 39.9836,
+  "center_lng" : 116.3155,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "科技", "书店", "简餐", "学生" ],
+  "suitable_scenes" : [ "低预算学生路线", "独处放松路线", "雨天路线" ]
+}, {
+  "area_id" : "BA019",
+  "city" : "北京",
+  "district" : "海淀区",
+  "area_name" : "颐和园/圆明园",
+  "center_lat" : 39.9999,
+  "center_lng" : 116.2755,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "景点", "公园", "游客", "散步" ],
+  "suitable_scenes" : [ "游客半日游", "Citywalk", "独处放松路线" ]
+}, {
+  "area_id" : "BA020",
+  "city" : "北京",
+  "district" : "海淀区",
+  "area_name" : "魏公村",
+  "center_lat" : 39.9603,
+  "center_lng" : 116.3232,
+  "coordinate_system" : "GCJ-02",
+  "area_tags" : [ "高校", "餐饮", "性价比", "便利" ],
+  "suitable_scenes" : [ "低预算学生路线", "朋友聚会", "雨天路线" ]
+} ]
