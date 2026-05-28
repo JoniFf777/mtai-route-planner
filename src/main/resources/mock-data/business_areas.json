@@ -36,7 +36,7 @@
   "center_lat" : 39.9498,
   "center_lng" : 116.4749,
   "coordinate_system" : "GCJ-02",
-  "area_tags" : [ "夜景", "散步", "松弛感", "约会" ],
+  "area_tags" : [ "夜景", "散步", "约会", "松弛感" ],
   "suitable_scenes" : [ "情侣约会", "夜游路线", "独处放松路线" ]
 }, {
   "area_id" : "BA005",
@@ -76,7 +76,7 @@
   "center_lat" : 39.8954,
   "center_lng" : 116.4046,
   "coordinate_system" : "GCJ-02",
-  "area_tags" : [ "老北京", "游客", "景点", "小吃" ],
+  "area_tags" : [ "老北京", "游客", "景点", "本地小吃" ],
   "suitable_scenes" : [ "游客半日游", "Citywalk", "夜游路线" ]
 }, {
   "area_id" : "BA009",
@@ -156,7 +156,7 @@
   "center_lat" : 39.8916,
   "center_lng" : 116.3703,
   "coordinate_system" : "GCJ-02",
-  "area_tags" : [ "小吃", "烟火气", "清真餐饮", "本地感" ],
+  "area_tags" : [ "本地小吃", "烟火气", "清真餐饮", "本地感" ],
   "suitable_scenes" : [ "Citywalk", "低预算学生路线", "游客半日游" ]
 }, {
   "area_id" : "BA017",
