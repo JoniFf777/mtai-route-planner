@@ -4,14 +4,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record AdjustmentResult(
+public record ClarificationResolutionResult(
         String sessionId,
-        AdjustmentStatus status,
+        String status,
         String message,
+        ChangeRequest resolvedChangeRequest,
         RouteSessionState sessionState,
         GeneratedRoutePlan adjustedRoute
 ) {
-    public boolean success() {
-        return status == AdjustmentStatus.SUCCESS;
-    }
 }

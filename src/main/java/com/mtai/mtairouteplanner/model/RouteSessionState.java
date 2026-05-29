@@ -1,10 +1,14 @@
 package com.mtai.mtairouteplanner.model;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record RouteSessionState(
         String sessionId,
         String userId,

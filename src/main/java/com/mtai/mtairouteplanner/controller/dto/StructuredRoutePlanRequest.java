@@ -1,12 +1,14 @@
-package com.mtai.mtairouteplanner.model;
+package com.mtai.mtairouteplanner.controller.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.mtai.mtairouteplanner.model.RoutePlanRequest;
 
 import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record RouteSessionIntent(
+public record StructuredRoutePlanRequest(
+        String userId,
         String scene,
         String businessArea,
         String district,
@@ -17,30 +19,12 @@ public record RouteSessionIntent(
         List<String> preferTags,
         List<String> avoidTags
 ) {
-    public RouteSessionIntent {
+    public StructuredRoutePlanRequest {
         preferTags = preferTags == null ? List.of() : List.copyOf(preferTags);
         avoidTags = avoidTags == null ? List.of() : List.copyOf(avoidTags);
-        partySize = partySize <= 0 ? 1 : partySize;
     }
 
-    public static RouteSessionIntent from(RoutePlanRequest routePlanRequest) {
-        if (routePlanRequest == null) {
-            return null;
-        }
-        return new RouteSessionIntent(
-                routePlanRequest.scene(),
-                routePlanRequest.businessArea(),
-                routePlanRequest.district(),
-                routePlanRequest.timeWindow(),
-                routePlanRequest.budgetTotal(),
-                routePlanRequest.partySize(),
-                routePlanRequest.pace(),
-                routePlanRequest.preferTags(),
-                routePlanRequest.avoidTags()
-        );
-    }
-
-    public RoutePlanRequest toRoutePlanRequest(String userId) {
+    public RoutePlanRequest toRoutePlanRequest() {
         return new RoutePlanRequest(
                 userId,
                 scene,

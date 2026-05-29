@@ -45,6 +45,7 @@ public class RouteAdjustmentService {
     private final PoiRetrievalService poiRetrievalService;
     private final TrafficTimeService trafficTimeService;
     private final RouteValidatorService routeValidatorService;
+    private final ClarificationService clarificationService;
     private final AtomicLong changeSequence = new AtomicLong(20000);
 
     public RouteAdjustmentService() {
@@ -63,6 +64,7 @@ public class RouteAdjustmentService {
         this.poiRetrievalService = new PoiRetrievalService(mockDataLoader);
         this.trafficTimeService = new TrafficTimeService(mockDataLoader);
         this.routeValidatorService = new RouteValidatorService(mockDataLoader);
+        this.clarificationService = new ClarificationService(routeSessionService);
     }
 
     public AdjustmentResult applyChange(String sessionId, long expectedVersion, ChangeRequest changeRequest) {
@@ -87,6 +89,21 @@ public class RouteAdjustmentService {
         if (session.currentRoute() == null) {
             return new AdjustmentResult(sessionId, AdjustmentStatus.FAILED, "Current route is missing.", session, null);
         }
+
+        ClarificationService.PreparationResult preparationResult = clarificationService.prepareClarification(session, changeRequest);
+        if ("WAITING_CLARIFICATION".equals(preparationResult.status())) {
+            return new AdjustmentResult(
+                    sessionId,
+                    AdjustmentStatus.WAITING_CLARIFICATION,
+                    preparationResult.message(),
+                    preparationResult.sessionState(),
+                    preparationResult.sessionState().currentRoute()
+            );
+        }
+        if ("REJECTED".equals(preparationResult.status())) {
+            return new AdjustmentResult(sessionId, AdjustmentStatus.REJECTED, preparationResult.message(), session, session.currentRoute());
+        }
+        changeRequest = preparationResult.resolvedChangeRequest();
 
         try {
             return switch (changeRequest.changeType()) {
