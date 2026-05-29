@@ -1,12 +1,14 @@
 package com.mtai.mtairouteplanner.controller;
 
-import com.mtai.mtairouteplanner.ai.FakeIntentAgentService;
-import com.mtai.mtairouteplanner.ai.FakePresenterService;
+import com.mtai.mtairouteplanner.ai.IntentAgentService;
+import com.mtai.mtairouteplanner.ai.PresenterAgentService;
 import com.mtai.mtairouteplanner.controller.dto.NaturalLanguageRouteRequest;
 import com.mtai.mtairouteplanner.controller.dto.NaturalLanguageRouteResponse;
 import com.mtai.mtairouteplanner.controller.dto.RouteSessionResponse;
+import com.mtai.mtairouteplanner.event.RouteLifecycleEventService;
 import com.mtai.mtairouteplanner.model.AdjustmentResult;
 import com.mtai.mtairouteplanner.model.AdjustmentStatus;
+import com.mtai.mtairouteplanner.model.ChangeType;
 import com.mtai.mtairouteplanner.model.ClarificationResolutionResult;
 import com.mtai.mtairouteplanner.model.CompactRouteContext;
 import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
@@ -19,6 +21,8 @@ import com.mtai.mtairouteplanner.service.RouteContextAssembler;
 import com.mtai.mtairouteplanner.service.RouteOptimizerService;
 import com.mtai.mtairouteplanner.service.RouteSessionNotFoundException;
 import com.mtai.mtairouteplanner.service.RouteSessionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,41 +38,65 @@ import java.util.List;
 @RequestMapping("/api/routes")
 public class RoutePlanningController {
 
-    private final FakeIntentAgentService fakeIntentAgentService;
+    private static final Logger log = LoggerFactory.getLogger(RoutePlanningController.class);
+
+    private final IntentAgentService intentAgentService;
     private final RouteOptimizerService routeOptimizerService;
     private final RouteSessionService routeSessionService;
     private final RouteAdjustmentService routeAdjustmentService;
     private final RouteContextAssembler routeContextAssembler;
     private final ClarificationService clarificationService;
-    private final FakePresenterService fakePresenterService;
+    private final PresenterAgentService presenterAgentService;
+    private final RouteLifecycleEventService routeLifecycleEventService;
 
     public RoutePlanningController(
-            FakeIntentAgentService fakeIntentAgentService,
+            IntentAgentService intentAgentService,
             RouteOptimizerService routeOptimizerService,
             RouteSessionService routeSessionService,
             RouteAdjustmentService routeAdjustmentService,
             RouteContextAssembler routeContextAssembler,
             ClarificationService clarificationService,
-            FakePresenterService fakePresenterService
+            PresenterAgentService presenterAgentService,
+            RouteLifecycleEventService routeLifecycleEventService
     ) {
-        this.fakeIntentAgentService = fakeIntentAgentService;
+        this.intentAgentService = intentAgentService;
         this.routeOptimizerService = routeOptimizerService;
         this.routeSessionService = routeSessionService;
         this.routeAdjustmentService = routeAdjustmentService;
         this.routeContextAssembler = routeContextAssembler;
         this.clarificationService = clarificationService;
-        this.fakePresenterService = fakePresenterService;
+        this.presenterAgentService = presenterAgentService;
+        this.routeLifecycleEventService = routeLifecycleEventService;
     }
 
     @PostMapping("/plan")
     public ResponseEntity<NaturalLanguageRouteResponse> plan(@RequestBody NaturalLanguageRouteRequest request) {
         validateRequest(request);
-        RoutePlanRequest routePlanRequest = fakeIntentAgentService.parsePlanRequest(request.userId(), request.message());
+        IntentAgentService.PlanParseResult planParseResult = intentAgentService.parsePlanRequestResult(
+                request.userId(),
+                request.message()
+        );
+        RoutePlanRequest routePlanRequest = planParseResult.primaryRequest();
         List<GeneratedRoutePlan> routes = routeOptimizerService.generateRoutes(routePlanRequest);
+        if (routes.isEmpty() && planParseResult.hasDistinctFallback()) {
+            log.info("Primary Spring AI parsed request produced no feasible route. Retrying with fallback request. {}",
+                    planParseResult.diagnosticSummary());
+            RoutePlanRequest fallbackRequest = planParseResult.fallbackRequest();
+            List<GeneratedRoutePlan> fallbackRoutes = routeOptimizerService.generateRoutes(fallbackRequest);
+            if (!fallbackRoutes.isEmpty()) {
+                routePlanRequest = fallbackRequest;
+                routes = fallbackRoutes;
+            }
+        }
         if (routes.isEmpty()) {
+            routeLifecycleEventService.publishRoutePlanFailed(
+                    request.userId(),
+                    routePlanRequest,
+                    "No feasible route found for the natural-language planning request."
+            );
             return ResponseEntity.ok(NaturalLanguageRouteResponse.failure(
                     "FAILED",
-                    fakePresenterService.presentNoFeasibleRoute(routePlanRequest)
+                    presenterAgentService.presentNoFeasibleRoute(routePlanRequest)
             ));
         }
 
@@ -78,12 +106,13 @@ public class RoutePlanningController {
                 RouteSessionIntent.from(routePlanRequest),
                 bestRoute
         );
+        routeLifecycleEventService.publishRoutePlanned(routeSessionState);
 
         return ResponseEntity.ok(NaturalLanguageRouteResponse.success(
                 routeSessionState.sessionId(),
                 "SUCCESS",
                 bestRoute,
-                fakePresenterService.presentPlanSuccess(routeSessionState),
+                presenterAgentService.presentInitialRoute(routeSessionState),
                 routeSessionState
         ));
     }
@@ -101,7 +130,7 @@ public class RoutePlanningController {
         }
 
         CompactRouteContext routeContext = routeContextAssembler.assemble(session);
-        FakeIntentAgentService.ParsedAdjustment parsedAdjustment = fakeIntentAgentService.parseAdjustment(
+        IntentAgentService.ParsedAdjustment parsedAdjustment = intentAgentService.parseAdjustment(
                 request.message(),
                 routeContext
         );
@@ -111,6 +140,7 @@ public class RoutePlanningController {
                     sessionId,
                     parsedAdjustment.clarificationAnswer()
             );
+            routeLifecycleEventService.publishClarificationResolved(resolutionResult);
             RouteSessionState latestSession = routeSessionService.findSession(sessionId)
                     .orElseThrow(() -> new RouteSessionNotFoundException(sessionId));
             AdjustmentResult adjustmentResult = routeAdjustmentService.applyChange(
@@ -118,6 +148,7 @@ public class RoutePlanningController {
                     latestSession.version(),
                     resolutionResult.resolvedChangeRequest()
             );
+            publishAdjustmentLifecycleEvent(adjustmentResult, resolutionResult.resolvedChangeRequest().changeType());
             return toResponse(adjustmentResult, "Clarification resolved and route updated.");
         }
 
@@ -125,6 +156,10 @@ public class RoutePlanningController {
                 sessionId,
                 session.version(),
                 parsedAdjustment.changeRequest()
+        );
+        publishAdjustmentLifecycleEvent(
+                adjustmentResult,
+                parsedAdjustment.changeRequest() == null ? null : parsedAdjustment.changeRequest().changeType()
         );
 
         if (adjustmentResult.status() == AdjustmentStatus.NOT_FOUND) {
@@ -150,7 +185,9 @@ public class RoutePlanningController {
 
     private NaturalLanguageRouteResponse toNaturalLanguageResponse(AdjustmentResult adjustmentResult, String defaultMessage) {
         RouteSessionState sessionState = adjustmentResult.sessionState();
-        String presenterMessage = fakePresenterService.presentAdjustmentResult(adjustmentResult);
+        String presenterMessage = adjustmentResult.status() == AdjustmentStatus.WAITING_CLARIFICATION
+                ? presenterAgentService.presentClarification(sessionState)
+                : presenterAgentService.presentAdjustmentResult(adjustmentResult);
         return new NaturalLanguageRouteResponse(
                 adjustmentResult.sessionId(),
                 adjustmentResult.status().name(),
@@ -174,5 +211,16 @@ public class RoutePlanningController {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void publishAdjustmentLifecycleEvent(AdjustmentResult adjustmentResult, ChangeType changeType) {
+        if (adjustmentResult == null || adjustmentResult.status() == null) {
+            return;
+        }
+        switch (adjustmentResult.status()) {
+            case SUCCESS -> routeLifecycleEventService.publishRouteAdjusted(adjustmentResult, changeType);
+            case WAITING_CLARIFICATION -> routeLifecycleEventService.publishRouteWaitingClarification(adjustmentResult, changeType);
+            case FAILED, REJECTED, VERSION_CONFLICT, NOT_FOUND -> routeLifecycleEventService.publishRouteAdjustmentFailed(adjustmentResult, changeType);
+        }
     }
 }

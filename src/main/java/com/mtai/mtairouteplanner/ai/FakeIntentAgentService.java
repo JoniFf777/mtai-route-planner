@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FakeIntentAgentService {
+public class FakeIntentAgentService implements IntentAgentService {
 
     private static final Map<String, String> BUSINESS_AREA_TO_DISTRICT = new LinkedHashMap<>();
     private static final Map<String, Integer> CHINESE_NUMBER_MAP = Map.ofEntries(
@@ -538,20 +538,4 @@ public class FakeIntentAgentService {
                 && !"低预算学生路线".equals(scene);
     }
 
-    public record ParsedAdjustment(
-            ChangeRequest changeRequest,
-            ClarificationAnswer clarificationAnswer
-    ) {
-        public static ParsedAdjustment change(ChangeRequest changeRequest) {
-            return new ParsedAdjustment(changeRequest, null);
-        }
-
-        public static ParsedAdjustment clarification(ClarificationAnswer clarificationAnswer) {
-            return new ParsedAdjustment(null, clarificationAnswer);
-        }
-
-        public boolean isClarificationAnswer() {
-            return clarificationAnswer != null;
-        }
-    }
 }

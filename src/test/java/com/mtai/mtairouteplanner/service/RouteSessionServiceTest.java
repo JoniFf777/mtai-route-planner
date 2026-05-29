@@ -23,7 +23,7 @@ class RouteSessionServiceTest {
     @Test
     void createAndReadSession() {
         RouteSessionIntent intent = RouteSessionIntent.from(sampleRequest());
-        GeneratedRoutePlan route = sampleRoute("RT001", "情侣约会");
+        GeneratedRoutePlan route = sampleRoute("RT001", "dating");
 
         RouteSessionState created = routeSessionService.createSession("U10001", intent, route);
 
@@ -41,13 +41,13 @@ class RouteSessionServiceTest {
         RouteSessionState created = routeSessionService.createSession(
                 "U10001",
                 RouteSessionIntent.from(sampleRequest()),
-                sampleRoute("RT001", "情侣约会")
+                sampleRoute("RT001", "dating")
         );
 
         RouteSessionState updated = routeSessionService.updateCurrentRoute(
                 created.sessionId(),
                 created.version(),
-                sampleRoute("RT020", "情侣约会")
+                sampleRoute("RT020", "dating")
         );
 
         assertThat(updated.currentRoute().templateId()).isEqualTo("RT020");
@@ -60,13 +60,13 @@ class RouteSessionServiceTest {
         RouteSessionState created = routeSessionService.createSession(
                 "U10001",
                 RouteSessionIntent.from(sampleRequest()),
-                sampleRoute("RT001", "情侣约会")
+                sampleRoute("RT001", "dating")
         );
 
         routeSessionService.updateCurrentIntent(
                 created.sessionId(),
                 created.version(),
-                new RouteSessionIntent("Citywalk", null, "东城区", "13:00-22:00", 800, 2, "适中", List.of("适合拍照"), List.of())
+                new RouteSessionIntent("Citywalk", null, "dongcheng", "13:00-22:00", 800, 2, "moderate", List.of("photo"), List.of())
         );
 
         assertThatThrownBy(() -> routeSessionService.updateCurrentRoute(
@@ -82,7 +82,7 @@ class RouteSessionServiceTest {
         RouteSessionState created = routeSessionService.createSession(
                 "U10001",
                 RouteSessionIntent.from(sampleRequest()),
-                sampleRoute("RT001", "情侣约会")
+                sampleRoute("RT001", "dating")
         );
 
         RouteSessionState locked = routeSessionService.lockStop(created.sessionId(), created.version(), 2);
@@ -99,13 +99,13 @@ class RouteSessionServiceTest {
         RouteSessionState created = routeSessionService.createSession(
                 "U10001",
                 RouteSessionIntent.from(sampleRequest()),
-                sampleRoute("RT001", "情侣约会")
+                sampleRoute("RT001", "dating")
         );
         PendingClarification clarification = new PendingClarification(
-                "你说的是第 1 站还是第 3 站？",
+                "Do you mean stop 1 or stop 3?",
                 List.of("target_stop"),
-                List.of("第1站", "第3站"),
-                "那家太贵了，换掉。",
+                List.of("1|dinner|Dinner A", "3|bar|Bar C"),
+                "That one is too expensive, replace it.",
                 LocalDateTime.of(2026, 5, 28, 20, 0)
         );
 
@@ -123,24 +123,24 @@ class RouteSessionServiceTest {
         RouteSessionState created = routeSessionService.createSession(
                 "U10001",
                 RouteSessionIntent.from(sampleRequest()),
-                sampleRoute("RT001", "情侣约会")
+                sampleRoute("RT001", "dating")
         );
         RouteChangeRecord first = new RouteChangeRecord(
                 "C10001",
                 "REPLACE_STOP",
-                "晚餐换便宜点",
+                "Replace dinner with a cheaper option",
                 1,
-                sampleRoute("RT001", "情侣约会"),
-                sampleRoute("RT020", "情侣约会"),
+                sampleRoute("RT001", "dating"),
+                sampleRoute("RT020", "dating"),
                 LocalDateTime.of(2026, 5, 28, 20, 10)
         );
         RouteChangeRecord second = new RouteChangeRecord(
                 "C10002",
                 "LOCK_STOP",
-                "第二站别动",
+                "Keep the second stop fixed",
                 2,
-                sampleRoute("RT020", "情侣约会"),
-                sampleRoute("RT020", "情侣约会"),
+                sampleRoute("RT020", "dating"),
+                sampleRoute("RT020", "dating"),
                 LocalDateTime.of(2026, 5, 28, 20, 12)
         );
 
@@ -163,27 +163,30 @@ class RouteSessionServiceTest {
     private RoutePlanRequest sampleRequest() {
         return new RoutePlanRequest(
                 "U10001",
-                "情侣约会",
-                "三里屯",
+                "dating",
+                "sanlitun",
                 null,
                 "18:00-22:00",
                 500,
                 2,
-                "轻松",
-                List.of("拍照"),
-                List.of("排队")
+                "relaxed",
+                List.of("photo"),
+                List.of("queue")
         );
     }
 
     private GeneratedRoutePlan sampleRoute(String templateId, String scene) {
         GeneratedRouteStop stop = new GeneratedRouteStop(
                 1,
-                "晚餐主餐",
+                "dinner",
                 "P00001",
-                "餐饮A·三里屯",
-                "三里屯",
-                "朝阳区",
-                "餐饮",
+                "Dinner A",
+                "sanlitun",
+                "chaoyang",
+                116.4567,
+                39.9345,
+                "GCJ-02",
+                "food",
                 "indoor",
                 "18:00",
                 "19:30",
@@ -192,7 +195,7 @@ class RouteSessionServiceTest {
                 0.0,
                 260,
                 95.0,
-                List.of("拍照"),
+                List.of("photo"),
                 List.of()
         );
         return new GeneratedRoutePlan(

@@ -3,6 +3,7 @@ package com.mtai.mtairouteplanner.controller;
 import com.mtai.mtairouteplanner.controller.dto.RouteSessionResponse;
 import com.mtai.mtairouteplanner.controller.dto.StructuredRoutePlanRequest;
 import com.mtai.mtairouteplanner.controller.dto.StructuredRoutePlanResponse;
+import com.mtai.mtairouteplanner.event.RouteLifecycleEventService;
 import com.mtai.mtairouteplanner.model.AdjustmentResult;
 import com.mtai.mtairouteplanner.model.AdjustmentStatus;
 import com.mtai.mtairouteplanner.model.ChangeRequest;
@@ -39,19 +40,22 @@ public class DevRouteController {
     private final RouteAdjustmentService routeAdjustmentService;
     private final RouteContextAssembler routeContextAssembler;
     private final ClarificationService clarificationService;
+    private final RouteLifecycleEventService routeLifecycleEventService;
 
     public DevRouteController(
             RouteOptimizerService routeOptimizerService,
             RouteSessionService routeSessionService,
             RouteAdjustmentService routeAdjustmentService,
             RouteContextAssembler routeContextAssembler,
-            ClarificationService clarificationService
+            ClarificationService clarificationService,
+            RouteLifecycleEventService routeLifecycleEventService
     ) {
         this.routeOptimizerService = routeOptimizerService;
         this.routeSessionService = routeSessionService;
         this.routeAdjustmentService = routeAdjustmentService;
         this.routeContextAssembler = routeContextAssembler;
         this.clarificationService = clarificationService;
+        this.routeLifecycleEventService = routeLifecycleEventService;
     }
 
     @PostMapping("/plan-structured")
@@ -60,6 +64,11 @@ public class DevRouteController {
         RoutePlanRequest routePlanRequest = request.toRoutePlanRequest();
         List<GeneratedRoutePlan> routes = routeOptimizerService.generateRoutes(routePlanRequest);
         if (routes.isEmpty()) {
+            routeLifecycleEventService.publishRoutePlanFailed(
+                    request.userId(),
+                    routePlanRequest,
+                    "No feasible route found for the structured planning request."
+            );
             return ResponseEntity.ok(new StructuredRoutePlanResponse(
                     null,
                     "FAILED",
@@ -74,6 +83,7 @@ public class DevRouteController {
                 RouteSessionIntent.from(routePlanRequest),
                 bestRoute
         );
+        routeLifecycleEventService.publishRoutePlanned(routeSessionState);
 
         return ResponseEntity.ok(new StructuredRoutePlanResponse(
                 routeSessionState.sessionId(),
@@ -104,6 +114,7 @@ public class DevRouteController {
                 .orElseThrow(() -> new RouteSessionNotFoundException(sessionId));
 
         AdjustmentResult adjustmentResult = routeAdjustmentService.applyChange(sessionId, session.version(), changeRequest);
+        publishAdjustmentLifecycleEvent(adjustmentResult, changeRequest.changeType());
         if (adjustmentResult.status() == AdjustmentStatus.NOT_FOUND) {
             throw new RouteSessionNotFoundException(sessionId);
         }
@@ -119,6 +130,7 @@ public class DevRouteController {
             @RequestBody ClarificationAnswer clarificationAnswer
     ) {
         ClarificationResolutionResult resolutionResult = clarificationService.resolvePendingClarification(sessionId, clarificationAnswer);
+        routeLifecycleEventService.publishClarificationResolved(resolutionResult);
         RouteSessionState currentSession = routeSessionService.findSession(sessionId)
                 .orElseThrow(() -> new RouteSessionNotFoundException(sessionId));
 
@@ -127,6 +139,7 @@ public class DevRouteController {
                 currentSession.version(),
                 resolutionResult.resolvedChangeRequest()
         );
+        publishAdjustmentLifecycleEvent(adjustmentResult, resolutionResult.resolvedChangeRequest().changeType());
 
         return ResponseEntity.ok(new ClarificationResolutionResult(
                 sessionId,
@@ -184,5 +197,16 @@ public class DevRouteController {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void publishAdjustmentLifecycleEvent(AdjustmentResult adjustmentResult, com.mtai.mtairouteplanner.model.ChangeType changeType) {
+        if (adjustmentResult == null || adjustmentResult.status() == null) {
+            return;
+        }
+        switch (adjustmentResult.status()) {
+            case SUCCESS -> routeLifecycleEventService.publishRouteAdjusted(adjustmentResult, changeType);
+            case WAITING_CLARIFICATION -> routeLifecycleEventService.publishRouteWaitingClarification(adjustmentResult, changeType);
+            case FAILED, REJECTED, VERSION_CONFLICT, NOT_FOUND -> routeLifecycleEventService.publishRouteAdjustmentFailed(adjustmentResult, changeType);
+        }
     }
 }

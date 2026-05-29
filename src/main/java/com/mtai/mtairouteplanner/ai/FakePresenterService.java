@@ -16,7 +16,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class FakePresenterService {
+public class FakePresenterService implements PresenterAgentService {
+
+    @Override
+    public String presentInitialRoute(RouteSessionState routeSessionState) {
+        return presentPlanSuccess(routeSessionState);
+    }
 
     public String presentPlanSuccess(RouteSessionState routeSessionState) {
         return buildRouteExplanation(
@@ -26,6 +31,7 @@ public class FakePresenterService {
         );
     }
 
+    @Override
     public String presentAdjustmentResult(AdjustmentResult adjustmentResult) {
         if (adjustmentResult == null) {
             return "这次调整没有返回结果，当前先保留原路线。";
@@ -49,6 +55,11 @@ public class FakePresenterService {
         return message.toString();
     }
 
+    @Override
+    public String presentClarification(RouteSessionState routeSessionState) {
+        return presentClarificationQuestion(routeSessionState);
+    }
+
     public String presentClarificationQuestion(RouteSessionState routeSessionState) {
         PendingClarification pendingClarification = routeSessionState == null ? null : routeSessionState.pendingClarification();
         if (pendingClarification == null) {
@@ -64,6 +75,7 @@ public class FakePresenterService {
         return message.toString();
     }
 
+    @Override
     public String presentNoFeasibleRoute(RoutePlanRequest routePlanRequest) {
         StringBuilder message = new StringBuilder("暂时没有找到符合当前条件的路线。");
         if (routePlanRequest != null) {
