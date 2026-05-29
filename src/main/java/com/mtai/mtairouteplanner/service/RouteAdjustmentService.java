@@ -128,10 +128,11 @@ public class RouteAdjustmentService {
         }
 
         RouteSessionState updated = lock
-                ? routeSessionService.lockStop(session.sessionId(), changeRequest.targetStopOrder())
-                : routeSessionService.unlockStop(session.sessionId(), changeRequest.targetStopOrder());
+                ? routeSessionService.lockStop(session.sessionId(), session.version(), changeRequest.targetStopOrder())
+                : routeSessionService.unlockStop(session.sessionId(), session.version(), changeRequest.targetStopOrder());
         RouteSessionState finalState = routeSessionService.appendChangeHistory(
                 updated.sessionId(),
+                updated.version(),
                 new RouteChangeRecord(
                         nextChangeId(),
                         changeRequest.changeType().name(),
@@ -159,31 +160,34 @@ public class RouteAdjustmentService {
             return new AdjustmentResult(session.sessionId(), AdjustmentStatus.REJECTED, lockedStopViolation, session, session.currentRoute());
         }
 
-        RouteSessionIntent updatedIntent = mergeIntent(session.currentIntent(), changeRequest);
-        RoutePlanRequest routePlanRequest = updatedIntent.toRoutePlanRequest(session.userId());
-        List<GeneratedRoutePlan> optimizerRoutes = routeOptimizerService.generateRoutes(routePlanRequest);
-
-        Optional<GeneratedRoutePlan> adjustedRoute = selectOptimizerRoute(session, changeRequest, lockedStopOrders, updatedIntent, optimizerRoutes)
+        RouteSessionIntent updatedIntent = buildAdjustedIntent(session.currentIntent(), changeRequest);
+        ReplanSelection replanSelection = selectAdjustedRoute(session, changeRequest, lockedStopOrders, updatedIntent);
+        Optional<GeneratedRoutePlan> adjustedRoute = replanSelection.adjustedRoute()
                 .or(() -> buildLocalFallback(session, changeRequest, lockedStopOrders, updatedIntent));
 
         if (adjustedRoute.isEmpty()) {
             return new AdjustmentResult(
                     session.sessionId(),
                     AdjustmentStatus.FAILED,
-                    "No feasible adjusted route found.",
+                    diagnoseAdjustmentFailure(changeRequest, lockedStopOrders, replanSelection.attempts()),
                     session,
                     session.currentRoute()
             );
         }
 
         RouteSessionState latestSession = session;
-        if (!updatedIntent.equals(session.currentIntent())) {
-            latestSession = routeSessionService.updateCurrentIntent(session.sessionId(), expectedVersion, updatedIntent);
+        RouteSessionIntent appliedIntent = replanSelection.appliedIntent();
+        if (changeRequest.changeType() == ChangeType.SWITCH_TO_INDOOR && !"雨天路线".equals(appliedIntent.scene())) {
+            appliedIntent = withScene(appliedIntent, "雨天路线");
+        }
+        if (!appliedIntent.equals(session.currentIntent())) {
+            latestSession = routeSessionService.updateCurrentIntent(session.sessionId(), expectedVersion, appliedIntent);
         }
         long routeExpectedVersion = latestSession.version();
         latestSession = routeSessionService.updateCurrentRoute(session.sessionId(), routeExpectedVersion, adjustedRoute.get());
         latestSession = routeSessionService.appendChangeHistory(
                 latestSession.sessionId(),
+                latestSession.version(),
                 new RouteChangeRecord(
                         nextChangeId(),
                         changeRequest.changeType().name(),
@@ -204,17 +208,29 @@ public class RouteAdjustmentService {
         );
     }
 
-    private Optional<GeneratedRoutePlan> selectOptimizerRoute(
+    private ReplanSelection selectAdjustedRoute(
             RouteSessionState session,
             ChangeRequest changeRequest,
             Set<Integer> lockedStopOrders,
-            RouteSessionIntent updatedIntent,
-            List<GeneratedRoutePlan> optimizerRoutes
+            RouteSessionIntent updatedIntent
     ) {
-        return optimizerRoutes.stream()
-                .filter(route -> preservesLockedStops(route, session.currentRoute(), lockedStopOrders))
-                .filter(route -> matchesChangeExpectation(route, session.currentRoute(), changeRequest, updatedIntent))
-                .findFirst();
+        List<ReplanAttempt> attempts = buildReplanAttempts(
+                session.userId(),
+                session.currentIntent(),
+                updatedIntent,
+                changeRequest,
+                lockedStopOrders.isEmpty()
+        );
+        for (ReplanAttempt attempt : attempts) {
+            Optional<GeneratedRoutePlan> selectedRoute = attempt.routes().stream()
+                    .filter(route -> preservesLockedStops(route, session.currentRoute(), lockedStopOrders))
+                    .filter(route -> matchesChangeExpectation(route, session.currentRoute(), changeRequest, attempt.intent()))
+                    .findFirst();
+            if (selectedRoute.isPresent()) {
+                return new ReplanSelection(selectedRoute, attempt.intent(), attempts);
+            }
+        }
+        return new ReplanSelection(Optional.empty(), updatedIntent, attempts);
     }
 
     private boolean matchesChangeExpectation(
@@ -231,7 +247,8 @@ public class RouteAdjustmentService {
             case REMOVE_STOP -> candidate.stops().size() < currentRoute.stops().size();
             case ADD_STOP -> candidate.stops().size() > currentRoute.stops().size();
             case LOWER_BUDGET -> candidate.totalBudget() <= updatedIntent.budgetTotal()
-                    && candidate.totalBudget() < currentRoute.totalBudget();
+                    && (updatedIntent.budgetTotal() < currentRoute.totalBudget()
+                    || candidate.totalBudget() < currentRoute.totalBudget());
             case CHANGE_TIME_WINDOW -> candidate.endTime().compareTo(changeRequest.newTimeWindow().split("-")[1]) <= 0;
             case SWITCH_TO_INDOOR -> candidate.stops().stream()
                     .allMatch(stop -> "indoor".equalsIgnoreCase(stop.indoorOutdoor()));
@@ -249,8 +266,122 @@ public class RouteAdjustmentService {
             case REPLACE_STOP -> buildLocalReplaceRoute(session, changeRequest, updatedIntent, lockedStopOrders);
             case REMOVE_STOP -> buildLocalRemoveRoute(session, changeRequest, updatedIntent, lockedStopOrders);
             case ADD_STOP -> buildLocalAddRoute(session, changeRequest, updatedIntent, lockedStopOrders);
+            case SWITCH_TO_INDOOR -> buildLocalIndoorRoute(session, updatedIntent, lockedStopOrders);
             default -> Optional.empty();
         };
+    }
+
+    private Optional<GeneratedRoutePlan> buildLocalIndoorRoute(
+            RouteSessionState session,
+            RouteSessionIntent updatedIntent,
+            Set<Integer> lockedStopOrders
+    ) {
+        Optional<GeneratedRoutePlan> rebuiltRoute = buildIndoorRouteSeeds(
+                session,
+                updatedIntent,
+                lockedStopOrders,
+                0,
+                new ArrayList<>(),
+                new LinkedHashSet<>()
+        );
+        if (rebuiltRoute.isPresent() || !lockedStopOrders.isEmpty()) {
+            return rebuiltRoute;
+        }
+        return buildCompactIndoorRoute(session, updatedIntent);
+    }
+
+    private Optional<GeneratedRoutePlan> buildCompactIndoorRoute(
+            RouteSessionState session,
+            RouteSessionIntent updatedIntent
+    ) {
+        List<RouteStopSeed> indoorSeeds = new ArrayList<>();
+        for (GeneratedRouteStop stop : session.currentRoute().stops()) {
+            if (!"indoor".equalsIgnoreCase(stop.indoorOutdoor())) {
+                continue;
+            }
+            Optional<LoadedPoi> loadedPoi = indexes.poiIndex().findByPoiId(stop.poiId());
+            if (loadedPoi.isEmpty()) {
+                return Optional.empty();
+            }
+            indoorSeeds.add(RouteStopSeed.fromExisting(stop, loadedPoi.get()));
+        }
+        if (indoorSeeds.size() < 2) {
+            return Optional.empty();
+        }
+        return buildRoutePlan(session.currentRoute(), indoorSeeds, updatedIntent)
+                .filter(route -> route.stops().stream().allMatch(stop -> "indoor".equalsIgnoreCase(stop.indoorOutdoor())));
+    }
+
+    private Optional<GeneratedRoutePlan> buildIndoorRouteSeeds(
+            RouteSessionState session,
+            RouteSessionIntent updatedIntent,
+            Set<Integer> lockedStopOrders,
+            int stopIndex,
+            List<RouteStopSeed> routeStopSeeds,
+            Set<String> excludedPoiIds
+    ) {
+        if (stopIndex >= session.currentRoute().stops().size()) {
+            return buildRoutePlan(session.currentRoute(), routeStopSeeds, updatedIntent)
+                    .filter(route -> route.stops().stream().allMatch(stop -> "indoor".equalsIgnoreCase(stop.indoorOutdoor())))
+                    .filter(route -> preservesLockedStops(route, session.currentRoute(), lockedStopOrders));
+        }
+
+        GeneratedRouteStop existingStop = session.currentRoute().stops().get(stopIndex);
+        boolean lockedStop = lockedStopOrders.contains(existingStop.stopOrder());
+
+        if (lockedStop || "indoor".equalsIgnoreCase(existingStop.indoorOutdoor())) {
+            Optional<LoadedPoi> existingPoi = indexes.poiIndex().findByPoiId(existingStop.poiId());
+            if (existingPoi.isEmpty()) {
+                return Optional.empty();
+            }
+
+            List<RouteStopSeed> nextSeeds = new ArrayList<>(routeStopSeeds);
+            nextSeeds.add(RouteStopSeed.fromExisting(existingStop, existingPoi.get()));
+            Set<String> nextExcludedPoiIds = new LinkedHashSet<>(excludedPoiIds);
+            nextExcludedPoiIds.add(existingStop.poiId());
+            return buildIndoorRouteSeeds(session, updatedIntent, lockedStopOrders, stopIndex + 1, nextSeeds, nextExcludedPoiIds);
+        }
+
+        for (String fallbackSlotRole : indoorFallbackSlotRoles(existingStop)) {
+            int candidateCount = 0;
+            for (PoiCandidate candidate : findCandidatesForSlot(
+                    fallbackSlotRole,
+                    existingStop.businessArea(),
+                    existingStop.district(),
+                    updatedIntent,
+                    excludedPoiIds,
+                    true
+            )) {
+                Optional<LoadedPoi> loadedPoi = indexes.poiIndex().findByPoiId(candidate.poiId());
+                if (loadedPoi.isEmpty()) {
+                    continue;
+                }
+
+                List<RouteStopSeed> nextSeeds = new ArrayList<>(routeStopSeeds);
+                nextSeeds.add(RouteStopSeed.fromCandidate(existingStop.slotRole(), candidate, loadedPoi.get()));
+                Set<String> nextExcludedPoiIds = new LinkedHashSet<>(excludedPoiIds);
+                nextExcludedPoiIds.add(candidate.poiId());
+
+                Optional<GeneratedRoutePlan> rebuiltRoute = buildIndoorRouteSeeds(
+                        session,
+                        updatedIntent,
+                        lockedStopOrders,
+                        stopIndex + 1,
+                        nextSeeds,
+                        nextExcludedPoiIds
+                );
+                if (rebuiltRoute.isPresent()) {
+                    return rebuiltRoute;
+                }
+
+                candidateCount++;
+                if (candidateCount >= SLOT_TOP_N) {
+                    break;
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     private Optional<GeneratedRoutePlan> buildLocalReplaceRoute(
@@ -631,6 +762,155 @@ public class RouteAdjustmentService {
         );
     }
 
+    private RouteSessionIntent buildAdjustedIntent(RouteSessionIntent currentIntent, ChangeRequest changeRequest) {
+        String scene = currentIntent.scene();
+        String businessArea = currentIntent.businessArea();
+        String district = currentIntent.district();
+        String timeWindow = currentIntent.timeWindow();
+        int budgetTotal = currentIntent.budgetTotal();
+        int partySize = currentIntent.partySize();
+        String pace = currentIntent.pace();
+        List<String> preferTags = new ArrayList<>(currentIntent.preferTags());
+        List<String> avoidTags = new ArrayList<>(currentIntent.avoidTags());
+
+        if (!changeRequest.preferTags().isEmpty()) {
+            preferTags = mergeTags(preferTags, changeRequest.preferTags());
+        }
+        if (!changeRequest.avoidTags().isEmpty()) {
+            avoidTags = mergeTags(avoidTags, changeRequest.avoidTags());
+        }
+
+        switch (changeRequest.changeType()) {
+            case LOWER_BUDGET -> {
+                if (changeRequest.newBudgetTotal() != null) {
+                    budgetTotal = changeRequest.newBudgetTotal();
+                }
+            }
+            case CHANGE_TIME_WINDOW -> {
+                if (hasText(changeRequest.newTimeWindow())) {
+                    timeWindow = changeRequest.newTimeWindow();
+                }
+            }
+            case SWITCH_TO_INDOOR -> {
+                avoidTags = mergeTags(avoidTags, List.of("outdoor"));
+                preferTags = mergeTags(preferTags, List.of("室内"));
+                businessArea = null;
+            }
+            default -> {
+            }
+        }
+
+        return new RouteSessionIntent(
+                scene,
+                businessArea,
+                district,
+                timeWindow,
+                budgetTotal,
+                partySize,
+                pace,
+                preferTags,
+                avoidTags
+        );
+    }
+
+    private List<ReplanAttempt> buildReplanAttempts(
+            String userId,
+            RouteSessionIntent currentIntent,
+            RouteSessionIntent updatedIntent,
+            ChangeRequest changeRequest,
+            boolean noLockedStops
+    ) {
+        List<RouteSessionIntent> candidateIntents = new ArrayList<>();
+        candidateIntents.add(updatedIntent);
+
+        if (changeRequest.changeType() == ChangeType.LOWER_BUDGET && noLockedStops && hasText(updatedIntent.businessArea())) {
+            candidateIntents.add(withBusinessArea(updatedIntent, null));
+        }
+
+        if (changeRequest.changeType() == ChangeType.SWITCH_TO_INDOOR) {
+            RouteSessionIntent indoorSameScene = withBusinessArea(updatedIntent, null);
+            candidateIntents.add(indoorSameScene);
+            if (noLockedStops && !"雨天路线".equals(currentIntent.scene())) {
+                candidateIntents.add(withScene(indoorSameScene, "雨天路线"));
+            }
+        }
+
+        Map<String, RouteSessionIntent> deduplicated = new LinkedHashMap<>();
+        for (RouteSessionIntent candidateIntent : candidateIntents) {
+            deduplicated.putIfAbsent(intentKey(candidateIntent), candidateIntent);
+        }
+
+        List<ReplanAttempt> attempts = new ArrayList<>();
+        for (RouteSessionIntent candidateIntent : deduplicated.values()) {
+            attempts.add(new ReplanAttempt(
+                    candidateIntent,
+                    routeOptimizerService.generateRoutes(candidateIntent.toRoutePlanRequest(userId))
+            ));
+        }
+        return List.copyOf(attempts);
+    }
+
+    private String diagnoseAdjustmentFailure(
+            ChangeRequest changeRequest,
+            Set<Integer> lockedStopOrders,
+            List<ReplanAttempt> attempts
+    ) {
+        if (!lockedStopOrders.isEmpty()) {
+            return "Locked stops make replan infeasible.";
+        }
+
+        return switch (changeRequest.changeType()) {
+            case LOWER_BUDGET -> "Budget too low for the requested scene, time window, and available POIs.";
+            case SWITCH_TO_INDOOR -> attempts.stream().anyMatch(attempt -> "雨天路线".equals(attempt.intent().scene()))
+                    ? "Indoor-only constraint is too strict for the current budget or time window."
+                    : "Template incompatible with adjustment.";
+            case CHANGE_TIME_WINDOW -> "Time window exceeded for available route templates.";
+            case ADD_STOP, REPLACE_STOP, REMOVE_STOP -> "No candidate POIs for required slot.";
+            default -> "No feasible adjusted route found.";
+        };
+    }
+
+    private RouteSessionIntent withScene(RouteSessionIntent intent, String scene) {
+        return new RouteSessionIntent(
+                scene,
+                intent.businessArea(),
+                intent.district(),
+                intent.timeWindow(),
+                intent.budgetTotal(),
+                intent.partySize(),
+                intent.pace(),
+                intent.preferTags(),
+                intent.avoidTags()
+        );
+    }
+
+    private RouteSessionIntent withBusinessArea(RouteSessionIntent intent, String businessArea) {
+        return new RouteSessionIntent(
+                intent.scene(),
+                businessArea,
+                intent.district(),
+                intent.timeWindow(),
+                intent.budgetTotal(),
+                intent.partySize(),
+                intent.pace(),
+                intent.preferTags(),
+                intent.avoidTags()
+        );
+    }
+
+    private String intentKey(RouteSessionIntent intent) {
+        return String.join("|",
+                String.valueOf(intent.scene()),
+                String.valueOf(intent.businessArea()),
+                String.valueOf(intent.district()),
+                String.valueOf(intent.timeWindow()),
+                String.valueOf(intent.budgetTotal()),
+                String.valueOf(intent.partySize()),
+                String.valueOf(intent.pace()),
+                String.join(",", intent.preferTags()),
+                String.join(",", intent.avoidTags()));
+    }
+
     private Set<Integer> resolveLockedStopOrders(RouteSessionState session, ChangeRequest changeRequest) {
         Set<Integer> lockedStopOrders = new LinkedHashSet<>(session.lockedStopOrders());
         lockedStopOrders.addAll(changeRequest.lockedStopOrders());
@@ -731,6 +1011,17 @@ public class RouteAdjustmentService {
         return List.copyOf(timePeriods);
     }
 
+    private List<String> indoorFallbackSlotRoles(GeneratedRouteStop existingStop) {
+        if (existingStop.slotRole().contains("晚餐") || existingStop.categoryLv1().contains("餐饮")) {
+            return List.of("晚餐主餐", "咖啡休息点", "甜品收尾");
+        }
+        if (existingStop.slotRole().contains("夜景") || existingStop.slotRole().contains("散步")
+                || existingStop.categoryLv1().contains("景点")) {
+            return List.of("室内活动", "咖啡休息点", "文化体验点");
+        }
+        return List.of("室内活动", "咖啡休息点", "甜品收尾");
+    }
+
     private SlotSearchProfile slotSearchProfile(String slotRole) {
         return switch (slotRole) {
             case "晚餐主餐" -> new SlotSearchProfile("餐饮", "晚餐主餐", null, null, "indoor", List.of());
@@ -785,8 +1076,12 @@ public class RouteAdjustmentService {
     }
 
     private int toMinutes(String timeText) {
-        LocalTime time = LocalTime.parse(timeText, TIME_FORMATTER);
-        return time.getHour() * 60 + time.getMinute();
+        String[] parts = timeText.split(":");
+        if (parts.length != 2) {
+            LocalTime time = LocalTime.parse(timeText, TIME_FORMATTER);
+            return time.getHour() * 60 + time.getMinute();
+        }
+        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
     }
 
     private String formatMinutes(int minutes) {
@@ -806,6 +1101,19 @@ public class RouteAdjustmentService {
 
     private String nextChangeId() {
         return "C" + changeSequence.incrementAndGet();
+    }
+
+    private record ReplanAttempt(
+            RouteSessionIntent intent,
+            List<GeneratedRoutePlan> routes
+    ) {
+    }
+
+    private record ReplanSelection(
+            Optional<GeneratedRoutePlan> adjustedRoute,
+            RouteSessionIntent appliedIntent,
+            List<ReplanAttempt> attempts
+    ) {
     }
 
     private record SlotSearchProfile(

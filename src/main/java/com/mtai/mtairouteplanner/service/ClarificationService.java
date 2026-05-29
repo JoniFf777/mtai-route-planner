@@ -43,7 +43,11 @@ public class ClarificationService {
                 LocalDateTime.now(),
                 changeRequest
         );
-        RouteSessionState updatedSession = routeSessionService.setPendingClarification(session.sessionId(), pendingClarification);
+        RouteSessionState updatedSession = routeSessionService.setPendingClarification(
+                session.sessionId(),
+                session.version(),
+                pendingClarification
+        );
         return PreparationResult.waiting(updatedSession, "Clarification is required before applying this change.");
     }
 
@@ -63,7 +67,7 @@ public class ClarificationService {
                 pendingClarification.originalChangeRequest(),
                 resolvedStopOrder
         );
-        RouteSessionState clearedSession = routeSessionService.clearPendingClarification(sessionId);
+        RouteSessionState clearedSession = routeSessionService.clearPendingClarification(sessionId, session.version());
 
         return new ClarificationResolutionResult(
                 sessionId,

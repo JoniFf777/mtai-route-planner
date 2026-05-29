@@ -132,8 +132,12 @@ public class RouteValidatorService {
     }
 
     private int toMinutes(String hhmm) {
-        LocalTime localTime = LocalTime.parse(hhmm, TIME_FORMATTER);
-        return localTime.getHour() * 60 + localTime.getMinute();
+        String[] parts = hhmm.split(":");
+        if (parts.length != 2) {
+            LocalTime localTime = LocalTime.parse(hhmm, TIME_FORMATTER);
+            return localTime.getHour() * 60 + localTime.getMinute();
+        }
+        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
     }
 
     private record TimeWindow(int startMinutes, int endMinutes) {

@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RouteContextAssemblerAndClarificationServiceTest {
 
-    private final RouteSessionService routeSessionService = new RouteSessionService();
+    private final RouteSessionService routeSessionService = new RouteSessionService(new InMemoryRouteSessionStore());
     private final RouteOptimizerService routeOptimizerService = new RouteOptimizerService();
     private final RouteAdjustmentService routeAdjustmentService = new RouteAdjustmentService(routeSessionService);
     private final RouteContextAssembler routeContextAssembler = new RouteContextAssembler();
@@ -30,24 +30,25 @@ class RouteContextAssemblerAndClarificationServiceTest {
     @Test
     void contextAssemblerReturnsCompactRouteAndLockedStops() {
         RouteSessionState session = createCitywalkSession();
-        RouteSessionState locked = routeSessionService.lockStop(session.sessionId(), 2);
+        RouteSessionState latest = routeSessionService.lockStop(session.sessionId(), session.version(), 2);
 
         for (int i = 1; i <= 6; i++) {
-            routeSessionService.appendChangeHistory(
-                    session.sessionId(),
+            latest = routeSessionService.appendChangeHistory(
+                    latest.sessionId(),
+                    latest.version(),
                     new RouteChangeRecord(
                             "C10" + i,
                             "TEST_CHANGE_" + i,
                             "change-" + i,
-                            i % locked.currentRoute().stops().size() + 1,
-                            locked.currentRoute(),
-                            locked.currentRoute(),
+                            i % latest.currentRoute().stops().size() + 1,
+                            latest.currentRoute(),
+                            latest.currentRoute(),
                             LocalDateTime.of(2026, 5, 28, 12, i)
                     )
             );
         }
 
-        RouteSessionState latest = routeSessionService.findSession(session.sessionId()).orElseThrow();
+        latest = routeSessionService.findSession(session.sessionId()).orElseThrow();
         CompactRouteContext context = routeContextAssembler.assemble(latest);
 
         assertThat(context.sessionId()).isEqualTo(session.sessionId());

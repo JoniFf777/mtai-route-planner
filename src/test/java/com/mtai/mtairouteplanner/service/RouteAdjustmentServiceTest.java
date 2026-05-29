@@ -95,6 +95,47 @@ class RouteAdjustmentServiceTest {
     }
 
     @Test
+    void lowerBudgetWithoutLockedStopsReplansDatingRouteOrReturnsSpecificBudgetReason() {
+        RouteSessionState session = createApiDatingSession();
+
+        AdjustmentResult result = routeAdjustmentService.applyChange(
+                session.sessionId(),
+                session.version(),
+                new ChangeRequest(ChangeType.LOWER_BUDGET, null, null, 300, null, List.of(), List.of(), List.of())
+        );
+
+        if (result.status() == AdjustmentStatus.SUCCESS) {
+            assertThat(result.sessionState().lockedStopOrders()).isEmpty();
+            assertThat(result.sessionState().currentIntent().budgetTotal()).isEqualTo(300);
+            assertThat(result.adjustedRoute().totalBudget()).isLessThanOrEqualTo(300);
+            assertThat(result.sessionState().changeHistory()).isNotEmpty();
+        } else {
+            assertThat(result.status()).isEqualTo(AdjustmentStatus.FAILED);
+            assertThat(result.message()).containsIgnoringCase("budget");
+            assertThat(result.message()).doesNotContain("No feasible adjusted route found");
+            assertThat(result.sessionState().lockedStopOrders()).isEmpty();
+        }
+    }
+
+    @Test
+    void switchToIndoorWithoutLockedStopsFindsIndoorFriendlyFallbackForDatingRoute() {
+        RouteSessionState session = createApiDatingSession();
+
+        AdjustmentResult result = routeAdjustmentService.applyChange(
+                session.sessionId(),
+                session.version(),
+                new ChangeRequest(ChangeType.SWITCH_TO_INDOOR, null, null, null, null, List.of(), List.of(), List.of())
+        );
+
+        assertThat(result.status()).isEqualTo(AdjustmentStatus.SUCCESS);
+        assertThat(result.sessionState().lockedStopOrders()).isEmpty();
+        assertThat(result.sessionState().currentIntent().scene()).isEqualTo("雨天路线");
+        assertThat(result.adjustedRoute().stops()).allSatisfy(stop ->
+                assertThat(stop.indoorOutdoor()).isEqualToIgnoringCase("indoor"));
+        assertThat(result.sessionState().changeHistory()).isNotEmpty();
+    }
+
+    @Test
     void lockStopPreventsChangingThatStop() {
         RouteSessionState session = createCitywalkSession();
         AdjustmentResult locked = routeAdjustmentService.applyChange(
@@ -212,6 +253,22 @@ class RouteAdjustmentServiceTest {
                 2,
                 "轻松",
                 List.of("展览"),
+                List.of()
+        );
+        return createSession(request);
+    }
+
+    private RouteSessionState createApiDatingSession() {
+        RoutePlanRequest request = new RoutePlanRequest(
+                "U10001",
+                "情侣约会",
+                null,
+                "朝阳区",
+                "18:00-22:00",
+                500,
+                2,
+                "轻松",
+                List.of("拍照"),
                 List.of()
         );
         return createSession(request);

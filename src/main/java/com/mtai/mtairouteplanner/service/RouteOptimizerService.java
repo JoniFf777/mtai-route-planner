@@ -197,7 +197,9 @@ public class RouteOptimizerService {
 
             beam = nextBeam.stream()
                     .sorted(Comparator
-                            .comparingDouble(PartialRoute::totalScore).reversed()
+                            .comparingDouble((PartialRoute partialRoute) ->
+                                    partialSelectionScore(partialRoute, request, templateCandidate.slotSequence().size()))
+                            .reversed()
                             .thenComparingInt(PartialRoute::totalBudget))
                     .limit(BEAM_WIDTH)
                     .toList();
@@ -346,11 +348,35 @@ public class RouteOptimizerService {
             ));
         }
 
-        return uniqueCandidates.values().stream()
+        List<PoiCandidate> topScoredCandidates = uniqueCandidates.values().stream()
                 .sorted(Comparator
                         .comparingDouble(PoiCandidate::finalScore).reversed()
+                        .thenComparingInt(PoiCandidate::avgPrice)
                         .thenComparing(PoiCandidate::poiId))
                 .limit(SLOT_TOP_N)
+                .toList();
+        List<PoiCandidate> lowestPriceCandidates = uniqueCandidates.values().stream()
+                .sorted(Comparator
+                        .comparingInt(PoiCandidate::avgPrice)
+                        .thenComparing(Comparator.comparingDouble(PoiCandidate::finalScore).reversed())
+                        .thenComparing(PoiCandidate::poiId))
+                .limit(Math.max(3, SLOT_TOP_N / 2))
+                .toList();
+
+        Map<String, PoiCandidate> selectedCandidates = new LinkedHashMap<>();
+        for (PoiCandidate candidate : topScoredCandidates) {
+            selectedCandidates.putIfAbsent(candidate.poiId(), candidate);
+        }
+        for (PoiCandidate candidate : lowestPriceCandidates) {
+            selectedCandidates.putIfAbsent(candidate.poiId(), candidate);
+        }
+
+        return selectedCandidates.values().stream()
+                .sorted(Comparator
+                        .comparingDouble(PoiCandidate::finalScore).reversed()
+                        .thenComparingInt(PoiCandidate::avgPrice)
+                        .thenComparing(PoiCandidate::poiId))
+                .limit(SLOT_TOP_N + 2)
                 .toList();
     }
 
@@ -557,9 +583,23 @@ public class RouteOptimizerService {
         return new TimeWindow(toMinutes(parts[0]), toMinutes(parts[1]));
     }
 
+    private double partialSelectionScore(PartialRoute partialRoute, RoutePlanRequest request, int totalSlotCount) {
+        if (partialRoute.stops().isEmpty() || totalSlotCount <= 0) {
+            return partialRoute.totalScore();
+        }
+        double budgetPerSlot = (double) request.budgetTotal() / totalSlotCount;
+        double averageSpentPerStop = (double) partialRoute.totalBudget() / partialRoute.stops().size();
+        double budgetPressurePenalty = Math.max(0.0, averageSpentPerStop - budgetPerSlot) * 0.35;
+        return partialRoute.totalScore() - budgetPressurePenalty;
+    }
+
     private int toMinutes(String timeText) {
-        LocalTime time = LocalTime.parse(timeText, TIME_FORMATTER);
-        return time.getHour() * 60 + time.getMinute();
+        String[] parts = timeText.split(":");
+        if (parts.length != 2) {
+            LocalTime time = LocalTime.parse(timeText, TIME_FORMATTER);
+            return time.getHour() * 60 + time.getMinute();
+        }
+        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
     }
 
     private String formatMinutes(int minutes) {

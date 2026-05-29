@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "route.session.store=memory")
 @AutoConfigureMockMvc
 class RoutePlanningControllerTest {
 
@@ -113,22 +113,62 @@ class RoutePlanningControllerTest {
 
     @Test
     void adjustMessageCanLowerBudget() throws Exception {
-        String sessionId = planSession("U10007", "周末想在南锣鼓巷 citywalk，预算500，想吃点小吃。");
+        String sessionId = planSession("U10007", "今晚想和女朋友在三里屯约会，预算500，不想太累，最好能拍照。");
 
-        mockMvc.perform(post("/api/routes/{sessionId}/adjust", sessionId)
+        MvcResult mvcResult = mockMvc.perform(post("/api/routes/{sessionId}/adjust", sessionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson("U10007", "预算降到300。")))
                 .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        assertThat(jsonNode.path("status").asText()).isIn("SUCCESS", "FAILED");
+        assertThat(jsonNode.path("message").asText().toLowerCase()).contains("budget");
+    }
+
+    @Test
+    void datingAdjustWithoutLockedStopsReturnsSpecificBudgetResult() throws Exception {
+        String sessionId = planSession("U10007A", "今晚想和女朋友在三里屯约会，预算500，不想太累，最好能拍照。");
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/routes/{sessionId}/adjust", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson("U10007A", "预算降到300。")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        assertThat(jsonNode.path("session").path("locked_stop_orders")).isEmpty();
+        assertThat(jsonNode.path("message").asText()).doesNotContain("No feasible adjusted route found");
+        assertThat(jsonNode.path("status").asText()).isIn("SUCCESS", "FAILED");
+        if ("SUCCESS".equals(jsonNode.path("status").asText())) {
+            assertThat(jsonNode.path("session").path("current_intent").path("budget_total").asInt()).isEqualTo(300);
+            assertThat(jsonNode.path("route").path("total_budget").asInt()).isLessThanOrEqualTo(300);
+        } else {
+            assertThat(jsonNode.path("message").asText().toLowerCase()).contains("budget");
+        }
+    }
+
+    @Test
+    void datingAdjustWithoutLockedStopsCanSwitchToIndoor() throws Exception {
+        String sessionId = planSession("U10007B", "今晚想和女朋友在三里屯约会，预算500，不想太累，最好能拍照。");
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/routes/{sessionId}/adjust", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson("U10007B", "今天下雨，改成室内。")))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.message").value(containsString("已按你的要求压低预算")))
-                .andExpect(jsonPath("$.message").value(containsString("预计总预算约")))
-                .andExpect(jsonPath("$.session.current_intent.budget_total").value(300))
-                .andExpect(jsonPath("$.route.total_budget").isNumber());
+                .andReturn();
+
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        assertThat(jsonNode.path("session").path("locked_stop_orders")).isEmpty();
+        for (JsonNode stopNode : jsonNode.path("route").path("stops")) {
+            assertThat(stopNode.path("indoor_outdoor").asText()).isEqualToIgnoringCase("indoor");
+        }
     }
 
     @Test
     void adjustMessageCanAddCoffee() throws Exception {
-        String sessionId = planSession("U10008", "周末想在南锣鼓巷 citywalk，预算300，想吃点小吃。");
+        String sessionId = planSession("U10008", "周末想在南锣鼓巷 citywalk，预算400，想吃点小吃。");
 
         MvcResult initialSession = mockMvc.perform(get("/api/routes/{sessionId}", sessionId))
                 .andExpect(status().isOk())

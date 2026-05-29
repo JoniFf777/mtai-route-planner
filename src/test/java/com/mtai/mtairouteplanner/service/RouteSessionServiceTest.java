@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RouteSessionServiceTest {
 
-    private final RouteSessionService routeSessionService = new RouteSessionService();
+    private final RouteSessionService routeSessionService = new RouteSessionService(new InMemoryRouteSessionStore());
 
     @Test
     void createAndReadSession() {
@@ -85,8 +85,8 @@ class RouteSessionServiceTest {
                 sampleRoute("RT001", "情侣约会")
         );
 
-        RouteSessionState locked = routeSessionService.lockStop(created.sessionId(), 2);
-        RouteSessionState unlocked = routeSessionService.unlockStop(created.sessionId(), 2);
+        RouteSessionState locked = routeSessionService.lockStop(created.sessionId(), created.version(), 2);
+        RouteSessionState unlocked = routeSessionService.unlockStop(created.sessionId(), locked.version(), 2);
 
         assertThat(locked.lockedStopOrders()).containsExactly(2);
         assertThat(locked.version()).isEqualTo(created.version() + 1);
@@ -109,8 +109,8 @@ class RouteSessionServiceTest {
                 LocalDateTime.of(2026, 5, 28, 20, 0)
         );
 
-        RouteSessionState waiting = routeSessionService.setPendingClarification(created.sessionId(), clarification);
-        RouteSessionState cleared = routeSessionService.clearPendingClarification(created.sessionId());
+        RouteSessionState waiting = routeSessionService.setPendingClarification(created.sessionId(), created.version(), clarification);
+        RouteSessionState cleared = routeSessionService.clearPendingClarification(created.sessionId(), waiting.version());
 
         assertThat(waiting.status()).isEqualTo(RouteSessionStatus.WAITING_CLARIFICATION);
         assertThat(waiting.pendingClarification()).isEqualTo(clarification);
@@ -144,8 +144,8 @@ class RouteSessionServiceTest {
                 LocalDateTime.of(2026, 5, 28, 20, 12)
         );
 
-        RouteSessionState afterFirst = routeSessionService.appendChangeHistory(created.sessionId(), first);
-        RouteSessionState afterSecond = routeSessionService.appendChangeHistory(created.sessionId(), second);
+        RouteSessionState afterFirst = routeSessionService.appendChangeHistory(created.sessionId(), created.version(), first);
+        RouteSessionState afterSecond = routeSessionService.appendChangeHistory(created.sessionId(), afterFirst.version(), second);
 
         assertThat(afterFirst.changeHistory()).containsExactly(first);
         assertThat(afterSecond.changeHistory()).containsExactly(first, second);
@@ -155,7 +155,7 @@ class RouteSessionServiceTest {
     @Test
     void missingSessionReturnsSafeOptionalOrClearException() {
         assertThat(routeSessionService.findSession("S99999")).isEmpty();
-        assertThatThrownBy(() -> routeSessionService.lockStop("S99999", 1))
+        assertThatThrownBy(() -> routeSessionService.lockStop("S99999", 1L, 1))
                 .isInstanceOf(RouteSessionNotFoundException.class)
                 .hasMessageContaining("S99999");
     }
