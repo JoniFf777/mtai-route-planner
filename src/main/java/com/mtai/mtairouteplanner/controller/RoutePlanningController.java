@@ -1,26 +1,26 @@
 package com.mtai.mtairouteplanner.controller;
 
-import com.mtai.mtairouteplanner.ai.IntentAgentService;
-import com.mtai.mtairouteplanner.ai.PresenterAgentService;
+import com.mtai.mtairouteplanner.ai.intent.IntentAgentService;
+import com.mtai.mtairouteplanner.ai.presenter.PresenterAgentService;
 import com.mtai.mtairouteplanner.controller.dto.NaturalLanguageRouteRequest;
 import com.mtai.mtairouteplanner.controller.dto.NaturalLanguageRouteResponse;
 import com.mtai.mtairouteplanner.controller.dto.RouteSessionResponse;
-import com.mtai.mtairouteplanner.event.RouteLifecycleEventService;
-import com.mtai.mtairouteplanner.model.AdjustmentResult;
-import com.mtai.mtairouteplanner.model.AdjustmentStatus;
-import com.mtai.mtairouteplanner.model.ChangeType;
-import com.mtai.mtairouteplanner.model.ClarificationResolutionResult;
-import com.mtai.mtairouteplanner.model.CompactRouteContext;
-import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
-import com.mtai.mtairouteplanner.model.RoutePlanRequest;
-import com.mtai.mtairouteplanner.model.RouteSessionIntent;
-import com.mtai.mtairouteplanner.model.RouteSessionState;
-import com.mtai.mtairouteplanner.service.ClarificationService;
-import com.mtai.mtairouteplanner.service.RouteAdjustmentService;
-import com.mtai.mtairouteplanner.service.RouteContextAssembler;
-import com.mtai.mtairouteplanner.service.RouteOptimizerService;
-import com.mtai.mtairouteplanner.service.RouteSessionNotFoundException;
-import com.mtai.mtairouteplanner.service.RouteSessionService;
+import com.mtai.mtairouteplanner.event.service.RouteLifecycleEventService;
+import com.mtai.mtairouteplanner.model.adjustment.AdjustmentResult;
+import com.mtai.mtairouteplanner.model.adjustment.AdjustmentStatus;
+import com.mtai.mtairouteplanner.model.adjustment.ChangeType;
+import com.mtai.mtairouteplanner.model.clarification.ClarificationResolutionResult;
+import com.mtai.mtairouteplanner.model.context.CompactRouteContext;
+import com.mtai.mtairouteplanner.model.route.GeneratedRoutePlan;
+import com.mtai.mtairouteplanner.model.route.RoutePlanRequest;
+import com.mtai.mtairouteplanner.model.session.RouteSessionIntent;
+import com.mtai.mtairouteplanner.model.session.RouteSessionState;
+import com.mtai.mtairouteplanner.service.route.clarification.ClarificationService;
+import com.mtai.mtairouteplanner.service.route.adjustment.RouteAdjustmentService;
+import com.mtai.mtairouteplanner.service.route.context.RouteContextAssembler;
+import com.mtai.mtairouteplanner.service.route.planning.RouteOptimizerService;
+import com.mtai.mtairouteplanner.service.route.session.RouteSessionNotFoundException;
+import com.mtai.mtairouteplanner.service.route.session.RouteSessionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -224,3 +224,4 @@ public class RoutePlanningController {
         }
     }
 }
+

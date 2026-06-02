@@ -1,13 +1,13 @@
 package com.mtai.mtairouteplanner.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtai.mtairouteplanner.ai.IntentAgentService;
-import com.mtai.mtairouteplanner.ai.PresenterAgentService;
-import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
-import com.mtai.mtairouteplanner.model.GeneratedRouteStop;
-import com.mtai.mtairouteplanner.model.RoutePlanRequest;
-import com.mtai.mtairouteplanner.model.RouteSessionState;
-import com.mtai.mtairouteplanner.service.RouteOptimizerService;
+import com.mtai.mtairouteplanner.ai.intent.IntentAgentService;
+import com.mtai.mtairouteplanner.ai.presenter.PresenterAgentService;
+import com.mtai.mtairouteplanner.model.route.GeneratedRoutePlan;
+import com.mtai.mtairouteplanner.model.route.GeneratedRouteStop;
+import com.mtai.mtairouteplanner.model.route.RoutePlanRequest;
+import com.mtai.mtairouteplanner.model.session.RouteSessionState;
+import com.mtai.mtairouteplanner.service.route.planning.RouteOptimizerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

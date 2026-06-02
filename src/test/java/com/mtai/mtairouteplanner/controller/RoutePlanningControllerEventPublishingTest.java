@@ -1,9 +1,9 @@
 package com.mtai.mtairouteplanner.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtai.mtairouteplanner.event.RouteEventPublisher;
-import com.mtai.mtairouteplanner.event.RouteEventType;
-import com.mtai.mtairouteplanner.event.RouteLifecycleEvent;
+import com.mtai.mtairouteplanner.event.model.RouteEventType;
+import com.mtai.mtairouteplanner.event.model.RouteLifecycleEvent;
+import com.mtai.mtairouteplanner.event.publisher.RouteEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -130,7 +130,7 @@ class DevRouteControllerTest {
                                 {
                                   "change_type": "LOWER_BUDGET",
                                   "new_budget_total": 650,
-                                  "avoid_tags": ["太贵"]
+                                  "avoid_tags": ["排队"]
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -235,7 +235,7 @@ class DevRouteControllerTest {
                                   "party_size": 2,
                                   "pace": "轻松",
                                   "prefer_tags": [],
-                                  "avoid_tags": ["排队久", "夜景"]
+                                  "avoid_tags": ["排队", "酒吧"]
                                 }
                                 """))
                 .andExpect(status().isOk())

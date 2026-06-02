@@ -9,3 +9,4 @@ public record ApiErrorResponse(
         String message
 ) {
 }
+

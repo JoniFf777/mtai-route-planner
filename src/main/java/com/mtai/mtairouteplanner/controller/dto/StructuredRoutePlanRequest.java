@@ -2,7 +2,7 @@ package com.mtai.mtairouteplanner.controller.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.mtai.mtairouteplanner.model.RoutePlanRequest;
+import com.mtai.mtairouteplanner.model.route.RoutePlanRequest;
 
 import java.util.List;
 
@@ -39,3 +39,4 @@ public record StructuredRoutePlanRequest(
         );
     }
 }
+

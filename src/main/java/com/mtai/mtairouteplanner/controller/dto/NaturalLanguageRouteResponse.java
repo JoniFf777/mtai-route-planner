@@ -3,8 +3,8 @@ package com.mtai.mtairouteplanner.controller.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
-import com.mtai.mtairouteplanner.model.RouteSessionState;
+import com.mtai.mtairouteplanner.model.route.GeneratedRoutePlan;
+import com.mtai.mtairouteplanner.model.session.RouteSessionState;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -35,3 +35,4 @@ public record NaturalLanguageRouteResponse(
         return new NaturalLanguageRouteResponse(null, status, null, message, null);
     }
 }
+

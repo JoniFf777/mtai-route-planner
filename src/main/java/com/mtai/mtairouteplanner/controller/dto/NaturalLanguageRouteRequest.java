@@ -9,3 +9,4 @@ public record NaturalLanguageRouteRequest(
         String message
 ) {
 }
+

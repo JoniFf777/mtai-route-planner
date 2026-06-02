@@ -2,12 +2,12 @@ package com.mtai.mtairouteplanner.controller.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
-import com.mtai.mtairouteplanner.model.PendingClarification;
-import com.mtai.mtairouteplanner.model.RouteChangeRecord;
-import com.mtai.mtairouteplanner.model.RouteSessionIntent;
-import com.mtai.mtairouteplanner.model.RouteSessionState;
-import com.mtai.mtairouteplanner.model.RouteSessionStatus;
+import com.mtai.mtairouteplanner.model.route.GeneratedRoutePlan;
+import com.mtai.mtairouteplanner.model.clarification.PendingClarification;
+import com.mtai.mtairouteplanner.model.adjustment.RouteChangeRecord;
+import com.mtai.mtairouteplanner.model.session.RouteSessionIntent;
+import com.mtai.mtairouteplanner.model.session.RouteSessionState;
+import com.mtai.mtairouteplanner.model.session.RouteSessionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,3 +41,4 @@ public record RouteSessionResponse(
         );
     }
 }
+

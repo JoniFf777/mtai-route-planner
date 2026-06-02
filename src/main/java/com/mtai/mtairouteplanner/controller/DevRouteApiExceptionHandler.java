@@ -1,7 +1,7 @@
 package com.mtai.mtairouteplanner.controller;
 
 import com.mtai.mtairouteplanner.controller.dto.ApiErrorResponse;
-import com.mtai.mtairouteplanner.service.RouteSessionNotFoundException;
+import com.mtai.mtairouteplanner.service.route.session.RouteSessionNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,3 +29,4 @@ public class DevRouteApiExceptionHandler {
         return new ApiErrorResponse("INVALID_REQUEST", "Request body could not be parsed.");
     }
 }
+

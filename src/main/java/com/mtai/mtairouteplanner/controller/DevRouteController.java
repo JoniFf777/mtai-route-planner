@@ -3,23 +3,23 @@ package com.mtai.mtairouteplanner.controller;
 import com.mtai.mtairouteplanner.controller.dto.RouteSessionResponse;
 import com.mtai.mtairouteplanner.controller.dto.StructuredRoutePlanRequest;
 import com.mtai.mtairouteplanner.controller.dto.StructuredRoutePlanResponse;
-import com.mtai.mtairouteplanner.event.RouteLifecycleEventService;
-import com.mtai.mtairouteplanner.model.AdjustmentResult;
-import com.mtai.mtairouteplanner.model.AdjustmentStatus;
-import com.mtai.mtairouteplanner.model.ChangeRequest;
-import com.mtai.mtairouteplanner.model.ClarificationAnswer;
-import com.mtai.mtairouteplanner.model.ClarificationResolutionResult;
-import com.mtai.mtairouteplanner.model.CompactRouteContext;
-import com.mtai.mtairouteplanner.model.GeneratedRoutePlan;
-import com.mtai.mtairouteplanner.model.RoutePlanRequest;
-import com.mtai.mtairouteplanner.model.RouteSessionIntent;
-import com.mtai.mtairouteplanner.model.RouteSessionState;
-import com.mtai.mtairouteplanner.service.ClarificationService;
-import com.mtai.mtairouteplanner.service.RouteAdjustmentService;
-import com.mtai.mtairouteplanner.service.RouteContextAssembler;
-import com.mtai.mtairouteplanner.service.RouteOptimizerService;
-import com.mtai.mtairouteplanner.service.RouteSessionNotFoundException;
-import com.mtai.mtairouteplanner.service.RouteSessionService;
+import com.mtai.mtairouteplanner.event.service.RouteLifecycleEventService;
+import com.mtai.mtairouteplanner.model.adjustment.AdjustmentResult;
+import com.mtai.mtairouteplanner.model.adjustment.AdjustmentStatus;
+import com.mtai.mtairouteplanner.model.adjustment.ChangeRequest;
+import com.mtai.mtairouteplanner.model.clarification.ClarificationAnswer;
+import com.mtai.mtairouteplanner.model.clarification.ClarificationResolutionResult;
+import com.mtai.mtairouteplanner.model.context.CompactRouteContext;
+import com.mtai.mtairouteplanner.model.route.GeneratedRoutePlan;
+import com.mtai.mtairouteplanner.model.route.RoutePlanRequest;
+import com.mtai.mtairouteplanner.model.session.RouteSessionIntent;
+import com.mtai.mtairouteplanner.model.session.RouteSessionState;
+import com.mtai.mtairouteplanner.service.route.clarification.ClarificationService;
+import com.mtai.mtairouteplanner.service.route.adjustment.RouteAdjustmentService;
+import com.mtai.mtairouteplanner.service.route.context.RouteContextAssembler;
+import com.mtai.mtairouteplanner.service.route.planning.RouteOptimizerService;
+import com.mtai.mtairouteplanner.service.route.session.RouteSessionNotFoundException;
+import com.mtai.mtairouteplanner.service.route.session.RouteSessionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -199,7 +199,7 @@ public class DevRouteController {
         return value != null && !value.isBlank();
     }
 
-    private void publishAdjustmentLifecycleEvent(AdjustmentResult adjustmentResult, com.mtai.mtairouteplanner.model.ChangeType changeType) {
+    private void publishAdjustmentLifecycleEvent(AdjustmentResult adjustmentResult, com.mtai.mtairouteplanner.model.adjustment.ChangeType changeType) {
         if (adjustmentResult == null || adjustmentResult.status() == null) {
             return;
         }
@@ -210,3 +210,4 @@ public class DevRouteController {
         }
     }
 }
+
