@@ -1,4 +1,4 @@
-# MTAI Route Planner MVP
+# MTAI Route Planner MVP（不定期暂停）
 
 This repository contains the current Beijing local-lifestyle route-planning MVP.
 
